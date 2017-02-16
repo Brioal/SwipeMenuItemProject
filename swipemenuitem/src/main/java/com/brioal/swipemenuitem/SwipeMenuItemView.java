@@ -1,6 +1,7 @@
 package com.brioal.swipemenuitem;
 
 import android.content.Context;
+import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
@@ -16,11 +17,11 @@ import android.widget.FrameLayout;
  */
 
 public class SwipeMenuItemView extends FrameLayout {
-    private final String TAG = "SwipeMenuItemView";
     private View mContentView; //主内容View
     private ViewGroup mMenuViewGroup;//菜单ViewGroup
     private ViewDragHelper mViewDragHelper;
     private OnMenuItemClickListener mClickListener;
+    private OnStatueChangeListener mChangeListener;
 
     public SwipeMenuItemView(Context context) {
         this(context, null);
@@ -33,6 +34,34 @@ public class SwipeMenuItemView extends FrameLayout {
 
     public void setOnMenuItemClickListener(OnMenuItemClickListener listener) {
         mClickListener = listener;
+    }
+
+    public void setOnStatueChangeListener(OnStatueChangeListener changeListener) {
+        mChangeListener = changeListener;
+    }
+
+    public boolean isOpen() {
+        if (mContentView.getLeft() == 0) {
+            return false;
+        }
+        return true;
+    }
+
+    public View getContentView() {
+        return mContentView;
+    }
+
+    public void setOpen(boolean isOpen) {
+        if (isOpen) {
+            //打开状态
+            open();
+            if (mChangeListener != null) {
+                mChangeListener.isOpened(true);
+            }
+        } else {
+            //关闭状态
+            close();
+        }
     }
 
     private void initViewDragHelper() {
@@ -68,12 +97,25 @@ public class SwipeMenuItemView extends FrameLayout {
 
             @Override
             public void onViewReleased(View releasedChild, float xvel, float yvel) {
-                if (mContentView.getLeft() < -mMenuViewGroup.getMeasuredWidth() / 4 + 50) {
+                if (mContentView.getLeft() <= -mMenuViewGroup.getMeasuredWidth() / 4) {
                     open();
                 } else {
                     close();
                 }
             }
+
+            @Override
+            public int getViewHorizontalDragRange(View child)
+            {
+                return 100;
+            }
+
+            @Override
+            public int getViewVerticalDragRange(View child)
+            {
+                return 0;
+            }
+
         });
     }
 
@@ -81,12 +123,18 @@ public class SwipeMenuItemView extends FrameLayout {
     private void close() {
         mViewDragHelper.smoothSlideViewTo(mContentView, 0, 0);
         ViewCompat.postInvalidateOnAnimation(this);
+        if (mChangeListener != null) {
+            mChangeListener.isOpened(false);
+        }
     }
 
     //打开
     private void open() {
         mViewDragHelper.smoothSlideViewTo(mContentView, -mMenuViewGroup.getMeasuredWidth(), 0);
         ViewCompat.postInvalidateOnAnimation(this);
+        if (mChangeListener != null) {
+            mChangeListener.isOpened(true);
+        }
     }
 
     @Override
@@ -117,6 +165,11 @@ public class SwipeMenuItemView extends FrameLayout {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+        final int action = MotionEventCompat.getActionMasked(ev);
+        if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
+            mViewDragHelper.cancel();
+            return false;
+        }
         return mViewDragHelper.shouldInterceptTouchEvent(ev);
     }
 

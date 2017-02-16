@@ -2,33 +2,27 @@ package com.brioal.swipemenuitemproject;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.widget.Toast;
 
-import com.brioal.swipemenuitem.OnMenuItemClickListener;
-import com.brioal.swipemenuitem.SwipeMenuItemView;
-
 public class MainActivity extends AppCompatActivity {
-    private SwipeMenuItemView mMenuItemView;
     private Toast mToast;
+    private RecyclerView mRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        mMenuItemView = (SwipeMenuItemView) findViewById(R.id.main_swipeMenuItem);
-        mMenuItemView.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-            @Override
-            public void onClicked(int position) {
-                switch (position) {
-                    case 0:
-                        showToast("点击置顶");
-                        break;
-                    case 1:
-                        showToast("点击删除");
-                        break;
-                }
-            }
-        });
+        setContentView(R.layout.layout_main);
+        mRecyclerView = (RecyclerView) findViewById(R.id.main_recyclerView);
+        initRecyclerView();
+    }
+
+    private void initRecyclerView() {
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        final MainAdapter adapter = new MainAdapter(this);
+        mRecyclerView.setAdapter(adapter);
+
     }
 
     private void showToast(String msg) {
